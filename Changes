@@ -1,5 +1,10 @@
 Revision history for Perl extension Template::Plugin::Translit::RU.
 
+0.05  Sat Jan 8 17:43:32 YEKT 2005
+	* Makefile.PL changed
+	* documentation changed
+	* conversion tables changed
+
 0.04  Sun Dec 19 19:24:56 YEKT 2004
 	* prerequisite Template::Plugin changed to Template
 	* conversion tables changed

@@ -1,4 +1,4 @@
-Template-Plugin-Translit-RU version 0.04
+Template-Plugin-Translit-RU version 0.05
 ========================================
 
 DESCRIPTION
@@ -19,7 +19,7 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-Template
+  Template
 
 IMPORTANT NOTE
 

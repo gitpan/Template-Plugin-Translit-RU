@@ -6,7 +6,7 @@
 #   Filter converting cyrillic text into transliterated one.
 #
 # AUTHOR
-#   Igor Lobanov   <igor.lobanov@gmail.com>
+#   Igor Lobanov <igor.lobanov@gmail.com>
 #
 # COPYRIGHT
 #   Copyright (C) 2004 Igor Lobanov.  All Rights Reserved.
@@ -22,45 +22,47 @@ use vars qw( $VERSION );
 use Template::Plugin;
 use base qw( Template::Plugin );
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.04 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.05 $ =~ /(\d+)\.(\d+)/);
+
+my $DEFAULT_CHARSET = 'koi';
 
 # (en|de)code table
 my $tab = {
 	koi	=> {
 		# {1} => {1}
 		single	=> [
-			'ÁÂ×ÇÄÅÚÉÊËÌÍÎÏÐÒÓÔÕÆØßáâ÷çäåúéêëìíîïðòóôõæøÿ',
-			"abvgdezijklmnoprstuf'\"ABVGDEZIJKLMNOPRSTUF'\""
+			'ÁÂ×ÇÄÅÚÉÊËÌÍÎÏÐÒÓÔÕÆØÙßáâ÷çäåúéêëìíîïðòóôõæøùÿ',
+			"abvgdezijklmnoprstuf'y\"ABVGDEZIJKLMNOPRSTUF'Y\""
 		],
 		# +	=> {2,}
 		plural	=> [
 			# 0: re with plural-transliterated letters and special cases
-			'(Ø[Å£ÀÑ]|£|Ö|È|Ã|Þ|Û|Ý|Ù|Ü|À|Ñ|ø[å³àñ]|³|ö|è|ã|þ|û|ý|ù|ü|à|ñ)',
+			'(ÕÛÞ|Ø[Å£ÀÑ]|Ù[Å£ÀÑÕ]|£|Ö|È|Ã|Þ|Û|Ý|Ü|À|Ñ|õûþ|ø[å³àñ]|ù[å³àñõ]|³|ö|è|ã|þ|û|ý|ü|à|ñ)',
 			# 1: table for these letters and cases [0]
 			{
-				'£'		=> 'yo',
-				'³'		=> 'Yo',
-				'Ö'		=> 'zh',
-				'ö'		=> 'Zh',
-				'È'		=> 'kh',
-				'è'		=> 'Kh',
-				'Ã'		=> 'tc',
-				'ã'		=> 'Tc',
-				'Þ'		=> 'ch',
-				'þ'		=> 'Ch',
-				'Û'		=> 'sh',
-				'û'		=> 'Sh',
-				'Ý'		=> 'shch',
-				'ý'		=> 'Shch',
-				'Ù'		=> 'yi',
-				'ù'		=> 'Yi',
-				'Ü'		=> 'ye',
-				'ü'		=> 'Ye',
-				'À'		=> 'yu',
-				'à'		=> 'Yu',
-				'Ñ'		=> 'ya',
-				'ñ'		=> 'Ya',
-				# {2} => {2,3} - could not be at the begining of the word
+				'£'	=> 'yo',
+				'³'	=> 'Yo',
+				'Ö'	=> 'zh',
+				'ö'	=> 'Zh',
+				'È'	=> 'kh',
+				'è'	=> 'Kh',
+				'Ã'	=> 'tc',
+				'ã'	=> 'Tc',
+				'Þ'	=> 'ch',
+				'þ'	=> 'Ch',
+				'Û'	=> 'sh',
+				'û'	=> 'Sh',
+				'Ý'	=> 'shch',
+				'ý'	=> 'Shch',
+				'Ù'	=> 'y',
+				'ù'	=> 'Y',
+				'Ü'	=> 'ye',
+				'ü'	=> 'Ye',
+				'À'	=> 'yu',
+				'à'	=> 'Yu',
+				'Ñ'	=> 'ya',
+				'ñ'	=> 'Ya',
+				# {2} => {3} - could not be at the begining of the word
 				'ØÅ'	=> 'jie',
 				'øå'	=> 'JIE',
 				'Ø£'	=> 'jio',
@@ -69,9 +71,22 @@ my $tab = {
 				'øà'	=> 'JIU',
 				'ØÑ'	=> 'jia',
 				'øñ'	=> 'JIA',
+				'ÙÅ'	=> 'yje',
+				'ùå'	=> 'YJE',
+				'Ù£'	=> 'yjo',
+				'ù³'	=> 'YJO',
+				'ÙÀ'	=> 'yju',
+				'ùà'	=> 'YJU',
+				'ÙÑ'	=> 'yja',
+				'ùñ'	=> 'YJA',
+				'ÙÕ'	=> 'yiu',
+				'ùõ'	=> 'YIU',
+				# {3} => {3,5} - could not be at the begining of the word
+				'ÕÛÞ'	=> 'uisch',
+				'õûþ'	=> 'UISCH',
 			},
 			# 3: re with special transliterated escapes
-			'(shch|Shch|SHCH|tch|TCH|Tch|ji[eoua]|JI[EOUA]|yo|zh|kh|tc|ch|sh|yi|ye|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Ii]|Y[Ee]|Y[Uu]|Y[Aa])',
+			'(uisch|UISCH|shch|Shch|SHCH|tch|TCH|Tch|ji[eoua]|JI[EOUA]|yj[eoua]|yiu|YIU|YJ[EOUA]|yo|zh|kh|tc|ch|sh|ye|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Ee]|Y[Uu]|Y[Aa])',
 			# 4: table for special transliterated escapes [3]
 			{
 				'shch'	=> 'Ý',
@@ -88,13 +103,22 @@ my $tab = {
 				'JIO'	=> 'ø³',
 				'JIU'	=> 'øà',
 				'JIA'	=> 'øñ',
+				'yje'	=> 'ÙÅ',
+				'yjo'	=> 'Ù£',
+				'yju'	=> 'ÙÀ',
+				'yja'	=> 'ÙÑ',
+				'yiu'	=> 'ÙÕ',
+				'YJE'	=> 'ùå',
+				'YJO'	=> 'ù³',
+				'YJU'	=> 'ùà',
+				'YJA'	=> 'ùñ',
+				'YIU'	=> 'ùõ',
 				'yo'	=> '£',
 				'zh'	=> 'Ö',
 				'kh'	=> 'È',
 				'tc'	=> 'Ã',
 				'ch'	=> 'Þ',
 				'sh'	=> 'Û',
-				'yi'	=> 'Ù',
 				'ye'	=> 'Ü',
 				'yu'	=> 'À',
 				'ya'	=> 'Ñ',
@@ -110,52 +134,52 @@ my $tab = {
 				'Ch'	=> 'þ',
 				'SH'	=> 'û',
 				'Sh'	=> 'û',
-				'YI'	=> 'ù',
-				'Yi'	=> 'ù',
 				'YE'	=> 'ü',
 				'Ye'	=> 'ü',
 				'YU'	=> 'à',
 				'Yu'	=> 'à',
 				'YA'	=> 'ñ',
 				'Ya'	=> 'ñ',
+				'uisch'	=> 'ÕÛÞ',
+				'UISCH'	=> 'õûþ',
 			}
 		]
 	},
 	win	=> {
 		# {1} => {1}
 		single	=> [
-			'àáâãäåçèéêëìíîïðñòóôüúÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÐÑÒÓÔÜÚ',
-			"abvgdezijklmnoprstuf'\"ABVGDEZIJKLMNOPRSTUF'\""
+			'àáâãäåçèéêëìíîïðñòóôüûúÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÐÑÒÓÔÜÛÚ',
+			"abvgdezijklmnoprstuf'y\"ABVGDEZIJKLMNOPRSTUF'Y\""
 		],
 		# +	=> {2,}
 		plural	=> [
 			# 0: re with plural-transliterated letters and special cases
-			'(ü[å¸þÿ]|¸|æ|õ|ö|÷|ø|ù|û|ý|þ|ÿ|Ü[Å¨Þß]|¨|Æ|Õ|Ö|×|Ø|Ù|Û|Ý|Þ|ß)',
+			'(óø÷|ü[å¸þÿ]|û[å¸þÿó]|¸|æ|õ|ö|÷|ø|ù|ý|þ|ÿ|ÓØ×|Ü[Å¨Þß]|Û[Å¨ÞßÓ]|¨|Æ|Õ|Ö|×|Ø|Ù|Ý|Þ|ß)',
 			# 1: table for these letters and cases [0]
 			{
-				'¸'		=> 'yo',
-				'¨'		=> 'Yo',
-				'æ'		=> 'zh',
-				'Æ'		=> 'Zh',
-				'õ'		=> 'kh',
-				'Õ'		=> 'Kh',
-				'ö'		=> 'tc',
-				'Ö'		=> 'Tc',
-				'÷'		=> 'ch',
-				'×'		=> 'Ch',
-				'ø'		=> 'sh',
-				'Ø'		=> 'Sh',
-				'ù'		=> 'shch',
-				'Ù'		=> 'Shch',
-				'û'		=> 'yi',
-				'Û'		=> 'Yi',
-				'ý'		=> 'ye',
-				'Ý'		=> 'Ye',
-				'þ'		=> 'yu',
-				'Þ'		=> 'Yu',
-				'ÿ'		=> 'ya',
-				'ß'		=> 'Ya',
-				# {2} => {2,3} - could not be at the begining of the word
+				'¸'	=> 'yo',
+				'¨'	=> 'Yo',
+				'æ'	=> 'zh',
+				'Æ'	=> 'Zh',
+				'õ'	=> 'kh',
+				'Õ'	=> 'Kh',
+				'ö'	=> 'tc',
+				'Ö'	=> 'Tc',
+				'÷'	=> 'ch',
+				'×'	=> 'Ch',
+				'ø'	=> 'sh',
+				'Ø'	=> 'Sh',
+				'ù'	=> 'shch',
+				'Ù'	=> 'Shch',
+				'û'	=> 'y',
+				'Û'	=> 'Y',
+				'ý'	=> 'ye',
+				'Ý'	=> 'Ye',
+				'þ'	=> 'yu',
+				'Þ'	=> 'Yu',
+				'ÿ'	=> 'ya',
+				'ß'	=> 'Ya',
+				# {2} => {3} - could not be at the begining of the word
 				'üå'	=> 'jie',
 				'ÜÅ'	=> 'JIE',
 				'ü¸'	=> 'jio',
@@ -164,9 +188,22 @@ my $tab = {
 				'ÜÞ'	=> 'JIU',
 				'üÿ'	=> 'jia',
 				'Üß'	=> 'JIA',
+				'ûå'	=> 'yje',
+				'ÛÅ'	=> 'YJE',
+				'û¸'	=> 'yjo',
+				'Û¨'	=> 'YJO',
+				'ûþ'	=> 'yju',
+				'ÛÞ'	=> 'YJU',
+				'ûÿ'	=> 'yja',
+				'Ûß'	=> 'YJA',
+				'ûó'	=> 'yiu',
+				'ÛÓ'	=> 'YIU',
+				# {3} => {3,5} - could not be at the begining of the word
+				'óø÷'	=> 'uisch',
+				'ÓØ×'	=> 'UISCH',
 			},
 			# 3: re with special transliterated escapes
-			'(shch|Shch|SHCH|tch|TCH|Tch|ji[eoua]|JI[EOUA]|yo|zh|kh|tc|ch|sh|yi|ye|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Ii]|Y[Ee]|Y[Uu]|Y[Aa])',
+			'(uisch|UISCH|shch|Shch|SHCH|tch|TCH|Tch|ji[eoua]|JI[EOUA]|yj[eoua]|yiu|YIU|YJ[EOUA]|yo|zh|kh|tc|ch|sh|ye|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Ee]|Y[Uu]|Y[Aa])',
 			# 4: table for special transliterated escapes [3]
 			{
 				'shch'	=> 'ù',
@@ -183,13 +220,22 @@ my $tab = {
 				'JIO'	=> 'Ü¨',
 				'JIU'	=> 'ÜÞ',
 				'JIA'	=> 'Üß',
+				'yje'	=> 'ûå',
+				'yjo'	=> 'û¸',
+				'yju'	=> 'ûþ',
+				'yja'	=> 'ûÿ',
+				'yiu'	=> 'ûó',
+				'YJE'	=> 'ÛÅ',
+				'YJO'	=> 'Û¨',
+				'YJU'	=> 'ÛÞ',
+				'YJA'	=> 'Ûß',
+				'YIU'	=> 'ÛÓ',
 				'yo'	=> '¸',
 				'zh'	=> 'æ',
 				'kh'	=> 'õ',
 				'tc'	=> 'ö',
 				'ch'	=> '÷',
 				'sh'	=> 'ø',
-				'yi'	=> 'û',
 				'ye'	=> 'ý',
 				'yu'	=> 'þ',
 				'ya'	=> 'ÿ',
@@ -205,14 +251,14 @@ my $tab = {
 				'Ch'	=> '×',
 				'SH'	=> 'Ø',
 				'Sh'	=> 'Ø',
-				'YI'	=> 'Û',
-				'Yi'	=> 'Û',
 				'YE'	=> 'Ý',
 				'Ye'	=> 'Ý',
 				'YU'	=> 'Þ',
 				'Yu'	=> 'Þ',
 				'YA'	=> 'ß',
 				'Ya'	=> 'ß',
+				'uisch'	=> 'óø÷',
+				'UISCH'	=> 'ÓØ×',
 			}
 		]
 	}
@@ -221,8 +267,6 @@ my $tab = {
 # define aliases
 $tab->{'windows-1251'} = $tab->{'cp1251'} = $tab->{'win'};
 $tab->{'koi8-r'} = $tab->{'koi8r'} = $tab->{'koi8'} = $tab->{'koi'};
-
-my $DEFAULT_CHARSET = 'koi';
 
 sub new {
 	my ( $class, $context, @params ) = @_;
@@ -343,8 +387,8 @@ source cyrillic word and result of
 B<cyrillic>->B<translit>->B<cyrillic> conversion
 (B<CTC>-conversion). Although one of the aims of this module
 is to find such correspondence, this is difficult without
-making transliterated text bad understandable. Currently 2
-main problems are known:
+making transliterated text bad understandable. Currently 1
+main problem is known:
 
 =over
 
@@ -353,19 +397,7 @@ main problems are known:
 place if you make B<CTC>-conversion with UPPER case words.
 Fortunately there are no words which starts with signs.
 
-=item * Wrong B<CTC>-conversion in rare cases where cyrillic
-letters 'B<sh>' and 'B<ch>' meets one after another. In this
-case they are converted in cyrillic letter 'B<shch>'. This
-is rare case (I met it only twice after scaning dictionary
-with 130000 words) and very rare words.
-
 =back
-
-=head1 IMPORTANT NOTE
-
-This is alpha release of module. Charset tables and other
-stuff could be changed in future versions. Use this module
-on your own risk.
 
 =head1 SEE ALSO
 
@@ -373,7 +405,7 @@ L<Template|Template>
 
 =head1 AUTHOR
 
-Igor Lobanov, E<lt>igor.lobanov@gmail.comE<gt>
+Igor Lobanov, E<lt>liol@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
