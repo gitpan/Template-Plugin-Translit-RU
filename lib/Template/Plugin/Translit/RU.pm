@@ -22,20 +22,20 @@ use vars qw( $VERSION );
 use Template::Plugin;
 use base qw( Template::Plugin );
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.03 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.04 $ =~ /(\d+)\.(\d+)/);
 
 # (en|de)code table
 my $tab = {
 	koi	=> {
 		# {1} => {1}
 		single	=> [
-			'ÁÂ×ÇÄÅÚÉÊËÌÍÎÏÐÒÓÔÕÆØÙßÜáâ÷çäåúéêëìíîïðòóôõæøùÿü',
-			"abvgdezijklmnoprstuf'y\"eABVGDEZIJKLMNOPRSTUF'Y\"E"
+			'ÁÂ×ÇÄÅÚÉÊËÌÍÎÏÐÒÓÔÕÆØßáâ÷çäåúéêëìíîïðòóôõæøÿ',
+			"abvgdezijklmnoprstuf'\"ABVGDEZIJKLMNOPRSTUF'\""
 		],
 		# +	=> {2,}
 		plural	=> [
 			# 0: re with plural-transliterated letters and special cases
-			'(Ø[Å£ÀÑ]|£|Ö|È|Ã|Þ|Û|Ý|À|Ñ|ø[å³àñ]|³|ö|è|ã|þ|û|ý|à|ñ)',
+			'(Ø[Å£ÀÑ]|£|Ö|È|Ã|Þ|Û|Ý|Ù|Ü|À|Ñ|ø[å³àñ]|³|ö|è|ã|þ|û|ý|ù|ü|à|ñ)',
 			# 1: table for these letters and cases [0]
 			{
 				'£'		=> 'yo',
@@ -52,22 +52,26 @@ my $tab = {
 				'û'		=> 'Sh',
 				'Ý'		=> 'shch',
 				'ý'		=> 'Shch',
+				'Ù'		=> 'yi',
+				'ù'		=> 'Yi',
+				'Ü'		=> 'ye',
+				'ü'		=> 'Ye',
 				'À'		=> 'yu',
 				'à'		=> 'Yu',
 				'Ñ'		=> 'ya',
 				'ñ'		=> 'Ya',
 				# {2} => {2,3} - could not be at the begining of the word
-				'ØÅ'	=> 'je',
-				'øå'	=> 'JE',
+				'ØÅ'	=> 'jie',
+				'øå'	=> 'JIE',
 				'Ø£'	=> 'jio',
 				'ø³'	=> 'JIO',
-				'ØÀ'	=> 'ju',
-				'øà'	=> 'JU',
-				'ØÑ'	=> 'ja',
-				'øñ'	=> 'JA',
+				'ØÀ'	=> 'jiu',
+				'øà'	=> 'JIU',
+				'ØÑ'	=> 'jia',
+				'øñ'	=> 'JIA',
 			},
 			# 3: re with special transliterated escapes
-			'(shch|Shch|SHCH|tch|TCH|Tch|je|jio|ju|ja|JE|JIO|JU|JA|yo|zh|kh|tc|ch|sh|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Uu]|Y[Aa])',
+			'(shch|Shch|SHCH|tch|TCH|Tch|ji[eoua]|JI[EOUA]|yo|zh|kh|tc|ch|sh|yi|ye|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Ii]|Y[Ee]|Y[Uu]|Y[Aa])',
 			# 4: table for special transliterated escapes [3]
 			{
 				'shch'	=> 'Ý',
@@ -76,20 +80,22 @@ my $tab = {
 				'tch'	=> 'ÔÞ',
 				'TCH'	=> 'ôþ',
 				'Tch'	=> 'ôÞ',
-				'je'	=> 'ØÅ',
+				'jie'	=> 'ØÅ',
 				'jio'	=> 'Ø£',
-				'ju'	=> 'ØÀ',
-				'ja'	=> 'ØÑ',
-				'JE'	=> 'øå',
+				'jiu'	=> 'ØÀ',
+				'jia'	=> 'ØÑ',
+				'JIE'	=> 'øå',
 				'JIO'	=> 'ø³',
-				'JU'	=> 'øà',
-				'JA'	=> 'øñ',
+				'JIU'	=> 'øà',
+				'JIA'	=> 'øñ',
 				'yo'	=> '£',
 				'zh'	=> 'Ö',
 				'kh'	=> 'È',
 				'tc'	=> 'Ã',
 				'ch'	=> 'Þ',
 				'sh'	=> 'Û',
+				'yi'	=> 'Ù',
+				'ye'	=> 'Ü',
 				'yu'	=> 'À',
 				'ya'	=> 'Ñ',
 				'YO'	=> '³',
@@ -104,6 +110,10 @@ my $tab = {
 				'Ch'	=> 'þ',
 				'SH'	=> 'û',
 				'Sh'	=> 'û',
+				'YI'	=> 'ù',
+				'Yi'	=> 'ù',
+				'YE'	=> 'ü',
+				'Ye'	=> 'ü',
 				'YU'	=> 'à',
 				'Yu'	=> 'à',
 				'YA'	=> 'ñ',
@@ -114,13 +124,13 @@ my $tab = {
 	win	=> {
 		# {1} => {1}
 		single	=> [
-			'àáâãäåçèéêëìíîïðñòóôüûúýÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÐÑÒÓÔÜÛÚÝ',
-			"abvgdezijklmnoprstuf'y\"eABVGDEZIJKLMNOPRSTUF'Y\"E"
+			'àáâãäåçèéêëìíîïðñòóôüúÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÐÑÒÓÔÜÚ',
+			"abvgdezijklmnoprstuf'\"ABVGDEZIJKLMNOPRSTUF'\""
 		],
 		# +	=> {2,}
 		plural	=> [
 			# 0: re with plural-transliterated letters and special cases
-			'(ü[å¸þÿ]|¸|æ|õ|ö|÷|ø|ù|þ|ÿ|Ü[Å¨Þß]|¨|Æ|Õ|Ö|×|Ø|Ù|Þ|ß)',
+			'(ü[å¸þÿ]|¸|æ|õ|ö|÷|ø|ù|û|ý|þ|ÿ|Ü[Å¨Þß]|¨|Æ|Õ|Ö|×|Ø|Ù|Û|Ý|Þ|ß)',
 			# 1: table for these letters and cases [0]
 			{
 				'¸'		=> 'yo',
@@ -137,22 +147,26 @@ my $tab = {
 				'Ø'		=> 'Sh',
 				'ù'		=> 'shch',
 				'Ù'		=> 'Shch',
+				'û'		=> 'yi',
+				'Û'		=> 'Yi',
+				'ý'		=> 'ye',
+				'Ý'		=> 'Ye',
 				'þ'		=> 'yu',
 				'Þ'		=> 'Yu',
 				'ÿ'		=> 'ya',
 				'ß'		=> 'Ya',
 				# {2} => {2,3} - could not be at the begining of the word
-				'üå'	=> 'je',
-				'ÜÅ'	=> 'JE',
+				'üå'	=> 'jie',
+				'ÜÅ'	=> 'JIE',
 				'ü¸'	=> 'jio',
 				'Ü¨'	=> 'JIO',
-				'üþ'	=> 'ju',
-				'ÜÞ'	=> 'JU',
-				'üÿ'	=> 'ja',
-				'Üß'	=> 'JA',
+				'üþ'	=> 'jiu',
+				'ÜÞ'	=> 'JIU',
+				'üÿ'	=> 'jia',
+				'Üß'	=> 'JIA',
 			},
 			# 3: re with special transliterated escapes
-			'(shch|Shch|SHCH|tch|TCH|Tch|je|jio|ju|ja|JE|JIO|JU|JA|yo|zh|kh|tc|ch|sh|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Uu]|Y[Aa])',
+			'(shch|Shch|SHCH|tch|TCH|Tch|ji[eoua]|JI[EOUA]|yo|zh|kh|tc|ch|sh|yi|ye|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Ii]|Y[Ee]|Y[Uu]|Y[Aa])',
 			# 4: table for special transliterated escapes [3]
 			{
 				'shch'	=> 'ù',
@@ -161,20 +175,22 @@ my $tab = {
 				'tch'	=> 'ò÷',
 				'TCH'	=> 'Ò×',
 				'Tch'	=> 'Ò÷',
-				'je'	=> 'üå',
+				'jie'	=> 'üå',
 				'jio'	=> 'ü¸',
-				'ju'	=> 'üþ',
-				'ja'	=> 'üÿ',
-				'JE'	=> 'ÜÅ',
+				'jiu'	=> 'üþ',
+				'jia'	=> 'üÿ',
+				'JIE'	=> 'ÜÅ',
 				'JIO'	=> 'Ü¨',
-				'JU'	=> 'ÜÞ',
-				'JA'	=> 'Üß',
+				'JIU'	=> 'ÜÞ',
+				'JIA'	=> 'Üß',
 				'yo'	=> '¸',
 				'zh'	=> 'æ',
 				'kh'	=> 'õ',
 				'tc'	=> 'ö',
 				'ch'	=> '÷',
 				'sh'	=> 'ø',
+				'yi'	=> 'û',
+				'ye'	=> 'ý',
 				'yu'	=> 'þ',
 				'ya'	=> 'ÿ',
 				'YO'	=> '¨',
@@ -189,6 +205,10 @@ my $tab = {
 				'Ch'	=> '×',
 				'SH'	=> 'Ø',
 				'Sh'	=> 'Ø',
+				'YI'	=> 'Û',
+				'Yi'	=> 'Û',
+				'YE'	=> 'Ý',
+				'Ye'	=> 'Ý',
 				'YU'	=> 'Þ',
 				'Yu'	=> 'Þ',
 				'YA'	=> 'ß',
@@ -200,7 +220,7 @@ my $tab = {
 
 # define aliases
 $tab->{'windows-1251'} = $tab->{'cp1251'} = $tab->{'win'};
-$tab->{'koi8-r'} = $tab->{'koi'};
+$tab->{'koi8-r'} = $tab->{'koi8r'} = $tab->{'koi8'} = $tab->{'koi'};
 
 my $DEFAULT_CHARSET = 'koi';
 
@@ -275,7 +295,8 @@ text into transliterated one and back.
 
 =head1 SYNOPSIS
 
- [%# Use as filters #%]
+Use as filters.
+
  [% USE Translit::RU 'translit' 'detranslit' %]
  [% FILTER translit( 'koi' ) %]
  ...
@@ -283,26 +304,62 @@ text into transliterated one and back.
  ...
  [% END %]
 
- [%#
-    Use as object
-    First argument - text for conversion
-    Second optional argument - charset ('koi' is default)
- #%]
- [% USE translit = Translit::RU %]
- [% translit.translit( 'without cyrillic text is useless' ) %]
- [% translit.detranslit( 'kirilitca', 'win' ) %]
+Use as object. First argument - text for conversion. Second
+optional argument - charset ('koi' is default).
+
+ [% USE plTranslit = Translit::RU %]
+ [% plTranslit.translit( 'without cyrillic text is useless' ) %]
+ [% plTranslit.detranslit( 'kirilitca', 'win' ) %]
 
 =head1 DESCRIPTION
 
-Template::Plugin::Translit::RU is Template Toolkit filter which
-allows to convert cyrillic text in one of two popular
-charsets koi8-r and windows-1251 into transliterated latin
-text. Also back conversion supported.
+Template::Plugin::Translit::RU is Template Toolkit filter
+which allows to convert cyrillic text into transliterated
+latin text. Currently two most popular charsets are
+supported - B<koi8-r> and B<windows-1251>. Also back
+conversion supported.
 
 =head1 SUPPORTED CHARSETS
 
 Currently Template::Plugin::Translit::RU supports 2 main
-cyrillic charsets koi8-r and windows-1251.
+cyrillic charsets B<koi8-r> and B<windows-1251>.
+
+Charset arguments could take such values:
+
+=over
+
+=item * 'koi', 'koi8-r', 'koi8r', 'koi8' - for B<koi8-r>
+charset.
+
+=item * 'win', 'windows-1251', 'cp1251' - for
+B<windows-1251> charset.
+
+=back
+
+=head1 KNOWN PROBLEMS
+
+In some cases there is no exact correspondence between
+source cyrillic word and result of
+B<cyrillic>->B<translit>->B<cyrillic> conversion
+(B<CTC>-conversion). Although one of the aims of this module
+is to find such correspondence, this is difficult without
+making transliterated text bad understandable. Currently 2
+main problems are known:
+
+=over
+
+=item * Case loss while conversion of hard and soft signs
+(UPPER source after B<CTC> become lower). This could take
+place if you make B<CTC>-conversion with UPPER case words.
+Fortunately there are no words which starts with signs.
+
+=item * Wrong B<CTC>-conversion in rare cases where cyrillic
+letters 'B<sh>' and 'B<ch>' meets one after another. In this
+case they are converted in cyrillic letter 'B<shch>'. This
+is rare case (I met it only twice after scaning dictionary
+with 130000 words) and very rare words.
+
+=back
 
 =head1 IMPORTANT NOTE
 
