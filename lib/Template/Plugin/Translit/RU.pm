@@ -22,61 +22,177 @@ use vars qw( $VERSION );
 use Template::Plugin;
 use base qw( Template::Plugin );
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.01 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.02 $ =~ /(\d+)\.(\d+)/);
 
-# encode table
+# (en|de)code table
 my $tab = {
 	koi	=> {
+		# {1} => {1}
 		single	=> [
-			'ÁÂ×ÇÄÅ£ÚÉÊËÌÍÎÏÐÒÓÔÕÆØÙßÜáâ÷çäå³úéêëìíîïðòóôõæøùÿü',
-			"abvgdeeziyklmnoprstuf'y'eABVGDEEZIYKLMNOPRSTUF'Y'E"
+			'ÁÂ×ÇÄÅÚÉÊËÌÍÎÏÐÒÓÔÕÆØÙßÜáâ÷çäåúéêëìíîïðòóôõæøùÿü',
+			"abvgdezijklmnoprstuf'y'eABVGDEZIJKLMNOPRSTUF'Y'E"
 		],
+		# +	=> {2,}
 		plural	=> [
-			'(Ö|È|Ã|Þ|Û|Ý|À|Ñ|ö|è|ã|þ|û|ý|à|ñ)',
+			# 0: re with plural-transliterated letters and special cases
+			'(Ø[Å£ÀÑ]|£|Ö|È|Ã|Þ|Û|Ý|À|Ñ|ø[å³àñ]|³|ö|è|ã|þ|û|ý|à|ñ)',
+			# 1: table for these letters and cases [0]
 			{
-				'Ö'	=> 'zh',
-				'È'	=> 'kh',
-				'Ã'	=> 'ts',
-				'Þ'	=> 'ch',
-				'Û'	=> 'sh',
-				'Ý'	=> 'shch',
-				'À'	=> 'yu',
-				'Ñ'	=> 'ya',
-				'ö'	=> 'Zh',
-				'è'	=> 'Kh',
-				'ã'	=> 'Ts',
-				'þ'	=> 'Ch',
-				'û'	=> 'Sh',
-				'ý'	=> 'Shch',
-				'à'	=> 'Yu',
-				'ñ'	=> 'Ya'
+				'£'		=> 'yo',
+				'³'		=> 'Yo',
+				'Ö'		=> 'zh',
+				'ö'		=> 'Zh',
+				'È'		=> 'kh',
+				'è'		=> 'Kh',
+				'Ã'		=> 'tc',
+				'ã'		=> 'Tc',
+				'Þ'		=> 'ch',
+				'þ'		=> 'Ch',
+				'Û'		=> 'sh',
+				'û'		=> 'Sh',
+				'Ý'		=> 'shch',
+				'ý'		=> 'Shch',
+				'À'		=> 'yu',
+				'à'		=> 'Yu',
+				'Ñ'		=> 'ya',
+				'ñ'		=> 'Ya',
+				# {2} => {2,3} - could not be at the begining of the word
+				'ØÅ'	=> 'je',
+				'øå'	=> 'JE',
+				'Ø£'	=> 'jio',
+				'ø³'	=> 'JIO',
+				'ØÀ'	=> 'ju',
+				'øà'	=> 'JU',
+				'ØÑ'	=> 'ja',
+				'øñ'	=> 'JA',
+			},
+			# 3: re with special transliterated escapes
+			'(shch|Shch|SHCH|tch|TCH|Tch|je|jio|ju|ja|JE|JIO|JU|JA|yo|zh|kh|tc|ch|sh|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Uu]|Y[Aa])',
+			# 4: table for special transliterated escapes [3]
+			{
+				'shch'	=> 'Ý',
+				'SHCH'	=> 'ý',
+				'Shch'	=> 'ý',
+				'tch'	=> 'ÔÞ',
+				'TCH'	=> 'ôþ',
+				'Tch'	=> 'ôÞ',
+				'je'	=> 'ØÅ',
+				'jio'	=> 'Ø£',
+				'ju'	=> 'ØÀ',
+				'ja'	=> 'ØÑ',
+				'JE'	=> 'øå',
+				'JIO'	=> 'ø³',
+				'JU'	=> 'øà',
+				'JA'	=> 'øñ',
+				'yo'	=> '£',
+				'zh'	=> 'Ö',
+				'kh'	=> 'È',
+				'tc'	=> 'Ã',
+				'ch'	=> 'Þ',
+				'sh'	=> 'Û',
+				'yu'	=> 'À',
+				'ya'	=> 'Ñ',
+				'YO'	=> '³',
+				'Yo'	=> '³',
+				'ZH'	=> 'ö',
+				'Zh'	=> 'ö',
+				'KH'	=> 'è',
+				'Kh'	=> 'è',
+				'TC'	=> 'ã',
+				'Tc'	=> 'ã',
+				'CH'	=> 'þ',
+				'Ch'	=> 'þ',
+				'SH'	=> 'û',
+				'Sh'	=> 'û',
+				'YU'	=> 'à',
+				'Yu'	=> 'à',
+				'YA'	=> 'ñ',
+				'Ya'	=> 'ñ',
 			}
 		]
 	},
 	win	=> {
+		# {1} => {1}
 		single	=> [
-			'àáâãäå¸çèéêëìíîïðñòóôüûúýÀÁÂÃÄÅ¨ÇÈÉÊËÌÍÎÏÐÑÒÓÔÜÛÚÝ',
-			"abvgdeeziyklmnoprstuf'y'eABVGDEEZIYKLMNOPRSTUF'Y'E"
+			'àáâãäåçèéêëìíîïðñòóôüûúýÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÐÑÒÓÔÜÛÚÝ',
+			"abvgdezijklmnoprstuf'y'eABVGDEZIJKLMNOPRSTUF'Y'E"
 		],
+		# +	=> {2,}
 		plural	=> [
-			'(æ|õ|ö|÷|ø|ù|þ|ÿ|Æ|Õ|Ö|×|Ø|Ù|Þ|ß)',
+			# 0: re with plural-transliterated letters and special cases
+			'(ü[å¸þÿ]|¸|æ|õ|ö|÷|ø|ù|þ|ÿ|Ü[Å¨Þß]|¨|Æ|Õ|Ö|×|Ø|Ù|Þ|ß)',
+			# 1: table for these letters and cases [0]
 			{
-				'æ'	=> 'zh',
-				'õ'	=> 'kh',
-				'ö'	=> 'ts',
-				'÷'	=> 'ch',
-				'ø'	=> 'sh',
-				'ù'	=> 'shch',
-				'þ'	=> 'yu',
-				'ÿ'	=> 'ya',
-				'Æ'	=> 'Zh',
-				'Õ'	=> 'Kh',
-				'Ö'	=> 'Ts',
-				'×'	=> 'Ch',
-				'Ø'	=> 'Sh',
-				'Ù'	=> 'Shch',
-				'Þ'	=> 'Yu',
-				'ß'	=> 'Ya'
+				'¸'		=> 'yo',
+				'¨'		=> 'Yo',
+				'æ'		=> 'zh',
+				'Æ'		=> 'Zh',
+				'õ'		=> 'kh',
+				'Õ'		=> 'Kh',
+				'ö'		=> 'tc',
+				'Ö'		=> 'Tc',
+				'÷'		=> 'ch',
+				'×'		=> 'Ch',
+				'ø'		=> 'sh',
+				'Ø'		=> 'Sh',
+				'ù'		=> 'shch',
+				'Ù'		=> 'Shch',
+				'þ'		=> 'yu',
+				'Þ'		=> 'Yu',
+				'ÿ'		=> 'ya',
+				'ß'		=> 'Ya',
+				# {2} => {2,3} - could not be at the begining of the word
+				'üå'	=> 'je',
+				'ÜÅ'	=> 'JE',
+				'ü¸'	=> 'jio',
+				'Ü¨'	=> 'JIO',
+				'üþ'	=> 'ju',
+				'ÜÞ'	=> 'JU',
+				'üÿ'	=> 'ja',
+				'Üß'	=> 'JA',
+			},
+			# 3: re with special transliterated escapes
+			'(shch|Shch|SHCH|tch|TCH|Tch|je|jio|ju|ja|JE|JIO|JU|JA|yo|zh|kh|tc|ch|sh|yu|ya|Y[Oo]|Z[Hh]|K[Hh]|T[Cc]|C[Hh]|S[Hh]|Y[Uu]|Y[Aa])',
+			# 4: table for special transliterated escapes [3]
+			{
+				'shch'	=> 'ù',
+				'SHCH'	=> 'Ù',
+				'Shch'	=> 'Ù',
+				'tch'	=> 'ò÷',
+				'TCH'	=> 'Ò×',
+				'Tch'	=> 'Ò÷',
+				'je'	=> 'üå',
+				'jio'	=> 'ü¸',
+				'ju'	=> 'üþ',
+				'ja'	=> 'üÿ',
+				'JE'	=> 'ÜÅ',
+				'JIO'	=> 'Ü¨',
+				'JU'	=> 'ÜÞ',
+				'JA'	=> 'Üß',
+				'yo'	=> '¸',
+				'zh'	=> 'æ',
+				'kh'	=> 'õ',
+				'tc'	=> 'ö',
+				'ch'	=> '÷',
+				'sh'	=> 'ø',
+				'yu'	=> 'þ',
+				'ya'	=> 'ÿ',
+				'YO'	=> '¨',
+				'Yo'	=> '¨',
+				'ZH'	=> 'Æ',
+				'Zh'	=> 'Æ',
+				'KH'	=> 'Õ',
+				'Kh'	=> 'Õ',
+				'TC'	=> 'Ö',
+				'Tc'	=> 'Ö',
+				'CH'	=> '×',
+				'Ch'	=> '×',
+				'SH'	=> 'Ø',
+				'Sh'	=> 'Ø',
+				'YU'	=> 'Þ',
+				'Yu'	=> 'Þ',
+				'YA'	=> 'ß',
+				'Ya'	=> 'ß',
 			}
 		]
 	}
@@ -129,16 +245,21 @@ sub detranslit_filter_factory {
 sub translit {
 	my ( $self, $text, $charset ) = @_;
 	$charset ||= $DEFAULT_CHARSET;
-	# replace singles
-	eval "\$text =~ tr/$tab->{$charset}->{single}->[0]/$tab->{$charset}->{single}->[1]/";
 	# replace plurals (most slow place)
 	$text =~ s/$tab->{$charset}->{plural}->[0]/$tab->{$charset}->{plural}->[1]->{$1}/sg;
+	# replace singles
+	eval "\$text =~ tr/$tab->{$charset}->{single}->[0]/$tab->{$charset}->{single}->[1]/";
 	return $text;
 }
 
 sub detranslit {
 	my ( $self, $text, $charset ) = @_;
-	return '[WARNING: detranslit method not yet supported]';
+	$charset ||= $DEFAULT_CHARSET;
+	# replace plurals (most slow place)
+	$text =~ s/$tab->{$charset}->{plural}->[2]/$tab->{$charset}->{plural}->[3]->{$1}/sge;
+	# replace singles
+	eval "\$text =~ tr/$tab->{$charset}->{single}->[1]/$tab->{$charset}->{single}->[0]/";
+	return $text;
 }
 
 1;
@@ -150,7 +271,7 @@ __END__
 =head1 NAME
 
 Template::Plugin::Translit::RU - Filter converting cyrillic
-text into transliterated one.
+text into transliterated one and back.
 
 =head1 SYNOPSIS
 
@@ -169,14 +290,14 @@ text into transliterated one.
  #%]
  [% USE translit = Translit::RU %]
  [% translit.translit( 'without cyrillic text is useless' ) %]
- [% translit.detranslit( 'kirilitsa', 'win' ) %]
+ [% translit.detranslit( 'kirilitca', 'win' ) %]
 
 =head1 DESCRIPTION
 
 Template::Plugin::Translit::RU is Template Toolkit filter which
 allows to convert cyrillic text in one of two popular
 charsets koi8-r and windows-1251 into transliterated latin
-text.
+text. Also back conversion supported.
 
 =head1 SUPPORTED CHARSETS
 
@@ -186,9 +307,8 @@ cyrillic charsets koi8-r and windows-1251.
 =head1 IMPORTANT NOTE
 
 This is alpha release of module. Charset tables and other
-stuff could be changed in future versions. Method
-'detranslit' is not yet implemented. Use this module on your
-own risk.
+stuff could be changed in future versions. Use this module
+on your own risk.
 
 =head1 SEE ALSO
 

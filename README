@@ -1,10 +1,10 @@
-Template-Plugin-Translit-RU version 0.01
+Template-Plugin-Translit-RU version 0.02
 ========================================
 
 DESCRIPTION
 
 Template Toolkit filter converting cyrillic text into
-transliterated one.
+transliterated and back.
 
 INSTALLATION
 
@@ -24,9 +24,8 @@ Template
 IMPORTANT NOTE
 
 This is alpha release of module. Charset tables and other
-stuff could be changed in future versions. Method
-'detranslit' is not yet implemented. Use this module on your
-own risk. All suggestions are welcome.
+stuff could be changed in future versions. Use this module
+on your own risk. All suggestions are welcome.
 
 COPYRIGHT AND LICENCE
 
