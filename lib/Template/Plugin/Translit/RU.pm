@@ -22,7 +22,7 @@ use vars qw( $VERSION );
 use Template::Plugin;
 use base qw( Template::Plugin );
 
-$VERSION = sprintf("%d.%02d", q$Revision: 0.02 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", q$Revision: 0.03 $ =~ /(\d+)\.(\d+)/);
 
 # (en|de)code table
 my $tab = {
@@ -30,7 +30,7 @@ my $tab = {
 		# {1} => {1}
 		single	=> [
 			'ÁÂ×ÇÄÅÚÉÊËÌÍÎÏÐÒÓÔÕÆØÙßÜáâ÷çäåúéêëìíîïðòóôõæøùÿü',
-			"abvgdezijklmnoprstuf'y'eABVGDEZIJKLMNOPRSTUF'Y'E"
+			"abvgdezijklmnoprstuf'y\"eABVGDEZIJKLMNOPRSTUF'Y\"E"
 		],
 		# +	=> {2,}
 		plural	=> [
@@ -115,7 +115,7 @@ my $tab = {
 		# {1} => {1}
 		single	=> [
 			'àáâãäåçèéêëìíîïðñòóôüûúýÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÐÑÒÓÔÜÛÚÝ',
-			"abvgdezijklmnoprstuf'y'eABVGDEZIJKLMNOPRSTUF'Y'E"
+			"abvgdezijklmnoprstuf'y\"eABVGDEZIJKLMNOPRSTUF'Y\"E"
 		],
 		# +	=> {2,}
 		plural	=> [
